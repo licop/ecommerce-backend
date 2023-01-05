@@ -1,6 +1,6 @@
 ## 电商项目后端代码
 
-使用 `empress` + `mongodb` 开发的电商项目后端代码
+使用 `express` + `mongodb` 开发的电商项目后端代码
 
 使用前将 db 文件夹中的 json 数据导入`mongodb`数据库即可
 
