@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       trim: true,
+      // 唯一索引确保索引字段不存储重复值
       unique: true,
       required: [true, "请填写邮件地址"]
     },
@@ -35,10 +36,14 @@ const userSchema = new mongoose.Schema(
       default: []
     }
   },
+  // timestamps是设置Schema的option选项
+  // 告诉 mongoose 将 createdAt 和 updatedAt 字段分配给您的Schema。分配的类型是日期
+  // https://mongoosejs.com/docs/5.x/docs/guide.html#timestamps
   { timestamps: true }
 )
 
-// 添加虚拟属性 password
+// 添加虚拟属性 password, 可以设置、获取，但是不会持久保存到MongoDB
+// https://mongoosejs.com/docs/5.x/docs/guide.html#virtuals
 userSchema
   .virtual("password")
   .set(function (password) {
@@ -50,7 +55,8 @@ userSchema
     return this._password
   })
 
-// 添加和用户相关的实例方法
+// 添加和用户相关的实例方法，User的实例可以使用这些方法
+// https://mongoosejs.com/docs/5.x/docs/guide.html#methods
 userSchema.methods = {
   // 验证密码
   authenticate: function (plainText) {
@@ -66,7 +72,7 @@ userSchema.methods = {
     }
   }
 }
-
+// 用于验证唯一索引，当存储的值重复时，给出提示，如上述email
 userSchema.plugin(uniqueValidator, { message: "{VALUE} 已经存在, 请更换" })
 
 module.exports = mongoose.model("User", userSchema)

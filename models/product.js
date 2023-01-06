@@ -1,5 +1,7 @@
 const mongoose = require("mongoose")
 
+// schema类型设置
+// https://mongoosejs.com/docs/5.x/docs/schematypes.html
 const productSchema = new mongoose.Schema(
   {
     name: {

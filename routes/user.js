@@ -5,6 +5,7 @@ const {
   update,
   purchaseHistory
 } = require("../controllers/user")
+
 const { requireSignin, isAuth } = require("../controllers/auth")
 
 const router = express.Router()
@@ -20,6 +21,7 @@ router.get(
   purchaseHistory
 )
 
+// 匹配参数带userId参数的路径，查找用户，在get方法之前执行
 router.param("userId", userById)
 
 module.exports = router

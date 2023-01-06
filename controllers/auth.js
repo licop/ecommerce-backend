@@ -62,6 +62,7 @@ const signout = (req, res) => {
 const requireSignin = expressJwt({
   secret: process.env.JWT_SECRET,
   algorithms: ["HS256"],
+  // req.auth
   userProperty: "auth"
 })
 
@@ -69,7 +70,9 @@ const requireSignin = expressJwt({
 const isAuth = (req, res, next) => {
   // req.profile => 通过用户 id 获取的用户信息
   // req.auth => 登录的用户信息
+  // req.auth { id: '63860dd2fbcb174ab69c2068', iat: 1672912195 }  
   let user = req.profile && req.auth && req.profile._id == req.auth.id
+  
   if (!user) {
     return res.status(403).json({
       error: "权限不足"

@@ -1,6 +1,7 @@
 const User = require("../models/user")
 const { Order } = require("../models/order")
 
+// 根据id获取用户，把user数据存储在req中，在接下来的读取和更新等中间件使用
 const userById = (req, res, next, id) => {
   User.findById(id).exec((error, user) => {
     if (error || !user) return res.status(400).json({ error: "用户没找到" })
@@ -8,16 +9,17 @@ const userById = (req, res, next, id) => {
     next()
   })
 }
-
+// 读取用户数据，把密码隐藏掉返回用户数据
 const read = (req, res) => {
   req.profile.hashed_password = undefined
   req.profile.salt = undefined
   return res.json(req.profile)
 }
 
+// 更新用户数据
 const update = (req, res) => {
   const { name, password } = req.body
-
+  
   User.findOne({ _id: req.profile._id }, (err, user) => {
     if (err || !user) return res.status(400).json({ error: "用户不存在" })
     if (!name) {
@@ -43,9 +45,10 @@ const update = (req, res) => {
   })
 }
 
+// 将订单添加到User的history
 const addOrderToUserHistory = (userId, orderId) => {
   let history = []
-
+  
   Order.findOne({ _id: orderId })
     .populate("products.product")
     .then(order => {
@@ -60,8 +63,11 @@ const addOrderToUserHistory = (userId, orderId) => {
           amount: order.amount
         })
       })
+      // https://mongoosejs.com/docs/tutorials/findoneandupdate.html
       User.findOneAndUpdate(
         { _id: userId },
+        // $push为数组的更新操作符
+        // https://docs.mongoing.com/can-kao/yun-suan-fu/update-operators
         { $push: { history: history } },
         { new: true, useFindAndModify: false },
         error => {
@@ -76,13 +82,18 @@ const addOrderToUserHistory = (userId, orderId) => {
       )
     )
 }
-
+// 获取用户的历史订单
 const purchaseHistory = (req, res) => {
   Order.find({ user: req.profile._id })
+    // https://mongoosejs.com/docs/5.x/docs/populate.html#populating-multiple-paths
     .populate([
+      // user选取 _id,name 
       { path: "user", select: "_id name" },
+      // products排除photo
       { path: "products.product", select: "-photo" }
     ])
+    // https://mongoosejs.com/docs/5.x/docs/api/query.html#query_Query-sort
+    // 排序，默认升序，前边加-为降序
     .sort("-created")
     .exec((err, orders) => {
       if (err) {

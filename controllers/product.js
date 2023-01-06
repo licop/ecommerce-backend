@@ -5,8 +5,11 @@ const Product = require("../models/product")
 const { Order } = require("../models/order")
 const { errorHandler } = require("../helpers/dbErrorHandler")
 
+// 新增产品
 const create = (req, res) => {
   // 创建上传表单对象
+  // formidable用于解析表单数据的 Node.js 模块，尤其是文件上传
+  // https://github.com/node-formidable/formidable
   let form = new formidable.IncomingForm()
   // 保留原有文件后缀
   form.keepExtensions = true
@@ -58,6 +61,7 @@ const create = (req, res) => {
   })
 }
 
+// 通过id获取product，将product存储到req中，在接下来的中间件使用
 const productById = (req, res, next, id) => {
   Product.findById(id)
     .populate("category")
@@ -69,11 +73,12 @@ const productById = (req, res, next, id) => {
     })
 }
 
+// 根据id读取产品，排除photo属性
 const read = (req, res) => {
   req.product.photo = undefined
   return res.json(req.product)
 }
-
+// 删除商品
 const remove = (req, res) => {
   let product = req.product
   product.remove((err, deletedProduct) => {
@@ -84,7 +89,7 @@ const remove = (req, res) => {
     })
   })
 }
-
+// 更新商品
 const update = (req, res) => {
   let form = new formidable.IncomingForm()
   form.keepExtensions = true
@@ -126,8 +131,9 @@ const list = (req, res) => {
 
   if (!allowOrderValue.includes(order))
     return res.status(400).json({ error: "请检查升降序参数" })
-
+  
   Product.find()
+    // 排除图片数据，通过单独连接获取
     .select("-photo")
     .populate("category")
     .sort([[sortBy, order]])
@@ -145,8 +151,10 @@ const list = (req, res) => {
 
 const listRelated = (req, res) => {
   let limit = req.query.limit ? parseInt(req.query.limit) : 6
-
+  // $ne为查询运算符 匹配所有不等于指定值的值 https://docs.mongoing.com/can-kao/yun-suan-fu/query-and-projection-operators
+  // 查找相同category分类下其他产品
   Product.find({ _id: { $ne: req.product }, category: req.product.category })
+    .select('-photo')
     .limit(limit)
     .populate("category", "_id name")
     .exec((error, products) => {
@@ -155,13 +163,17 @@ const listRelated = (req, res) => {
     })
 }
 
+// 获取产品用到的分类集合
 const listCategories = (req, res) => {
+  // 获取集合中指定字段的不重复值，并以数组的形式返回
+  // db.collection_name.distinct(field,query,options)
   Product.distinct("category", {}, (err, categories) => {
     if (err) res.status(400).json({ error: "没找到分类" })
     res.json(categories)
   })
 }
 
+// 商品列表筛选
 const listByFilter = (req, res) => {
   let order = req.body.order ? req.body.order : "desc"
   let sortBy = req.body.sortBy ? req.body.sortBy : "_id"
@@ -177,6 +189,7 @@ const listByFilter = (req, res) => {
     if (req.body.filters[key].length > 0) {
       if (key === "price") {
         findArgs[key] = {
+          // 判断价格区间
           $gte: req.body.filters[key][0],
           $lte: req.body.filters[key][1]
         }
@@ -198,6 +211,7 @@ const listByFilter = (req, res) => {
     })
 }
 
+// 获取封面，直接返回图片
 const photo = (req, res, next) => {
   if (req.product.photo.data) {
     res.set("Content-Type", req.product.photo.contentType)
@@ -206,9 +220,12 @@ const photo = (req, res, next) => {
   next()
 }
 
+// 通过name和category搜索产品
 const listSearch = (req, res) => {
   const query = {}
   if (req.query.search) {
+    // ​选择值与指定的正则表达式匹配的文档, $options: "i"表示不区分大小写 。
+    // https://www.mongodb.com/docs/manual/reference/operator/query/regex/
     query.name = { $regex: req.query.search, $options: "i" }
     if (req.query.category && req.query.category != "All") {
       query.category = req.query.category
@@ -233,7 +250,9 @@ const decreaseQuantity = orderId => {
           updateOne: {
             filter: { _id: item.product._id },
             update: {
+              // $inc 字段更新运算符, 将字段的值增加指定的数量。
               $inc: {
+                // 库存减少，销量增加
                 quantity: -item.count,
                 sold: +item.count
               }
@@ -241,6 +260,7 @@ const decreaseQuantity = orderId => {
           }
         }
       })
+      // bulkWrite为批量写入操作，将Order内的product数值变化，写入Product
       Product.bulkWrite(bulkOps, {}, error => {
         if (error) console.log("商品数量更新失败", error)
       })

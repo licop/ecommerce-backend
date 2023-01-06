@@ -1,3 +1,7 @@
+/**
+ * 用户注册验证 
+ */
+
 const userSignupValidator = (req, res, next) => {
   req.check("name", "请传入昵称").notEmpty()
   req

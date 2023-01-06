@@ -16,6 +16,7 @@ const Product = require("../models/product")
 
 const orderById = (req, res, next, id) => {
   Order.findById(id)
+    // product 只提取name和price
     .populate("products.product", "name price")
     .exec((err, order) => {
       if (err || !order) {
@@ -27,7 +28,7 @@ const orderById = (req, res, next, id) => {
       next()
     })
 }
-
+// 创建订单
 const createOrder = async order => {
   // 添加订单状态
   order.status = order.result ? "Paid" : "Unpaid"
@@ -61,7 +62,7 @@ const listOrders = (req, res) => {
       res.json(orders)
     })
 }
-
+// 更新订单状态
 const updateOrderStatus = (req, res) => {
   Order.update(
     { _id: req.body.orderId },

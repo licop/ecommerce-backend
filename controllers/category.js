@@ -2,6 +2,7 @@ const Category = require("../models/category")
 const Product = require("../models/product")
 const { errorHandler } = require("../helpers/dbErrorHandler")
 
+// 根据id获取分类
 const categoryById = (req, res, next, id) => {
   Category.findById(id).exec((err, category) => {
     if (err || !category) return res.status(400).json({ error: "分类不存在" })
@@ -10,6 +11,7 @@ const categoryById = (req, res, next, id) => {
   })
 }
 
+// 创建分类 
 const create = (req, res) => {
   const category = new Category(req.body)
   category.save((error, data) => {
@@ -22,10 +24,12 @@ const create = (req, res) => {
   })
 }
 
+// 读取分类
 const read = (req, res) => {
   return res.json(req.category)
 }
 
+// 更新分类
 const update = (req, res) => {
   const category = req.category
   category.name = req.body.name
@@ -35,6 +39,7 @@ const update = (req, res) => {
   })
 }
 
+// 删除分类
 const remove = (req, res) => {
   const category = req.category
   Product.find({ category }).exec((err, data) => {
@@ -50,7 +55,7 @@ const remove = (req, res) => {
     }
   })
 }
-
+// 返回所有分类
 const list = (req, res) => {
   Category.find().exec((err, data) => {
     if (err) return res.status(400).json({ error: errorHandler(err) })
