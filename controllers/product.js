@@ -165,7 +165,8 @@ const listRelated = (req, res) => {
 
 // 获取产品用到的分类集合
 const listCategories = (req, res) => {
-  // 获取集合中指定字段的不重复值，并以数组的形式返回
+  // distinct 聚合 获取集合中指定字段的不重复值，并以数组的形式返回
+  // https://docs.mongoing.com/aggregation
   // db.collection_name.distinct(field,query,options)
   Product.distinct("category", {}, (err, categories) => {
     if (err) res.status(400).json({ error: "没找到分类" })
